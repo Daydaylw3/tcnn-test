@@ -7,6 +7,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"reflect"
+	"runtime"
 	"strconv"
 	"sync"
 )
@@ -28,6 +29,10 @@ func init() {
 }
 
 func main() {
+	// 开启对阻塞和锁调用的跟踪
+	runtime.SetBlockProfileRate(1)
+	runtime.SetMutexProfileFraction(1)
+	
 	curr := make(chan struct{}, maxGoroutine)
 	task := &Task{}
 	http.HandleFunc("/work", func(w http.ResponseWriter, r *http.Request) {
