@@ -32,7 +32,7 @@ func main() {
 	// 开启对阻塞和锁调用的跟踪
 	runtime.SetBlockProfileRate(1)
 	runtime.SetMutexProfileFraction(1)
-	
+
 	curr := make(chan struct{}, maxGoroutine)
 	task := &Task{}
 	http.HandleFunc("/work", func(w http.ResponseWriter, r *http.Request) {
@@ -48,6 +48,17 @@ func main() {
 			<-curr
 		}()
 		wg.Wait()
+	})
+	var (
+		counter      int
+		counterMutex sync.Mutex
+	)
+	http.HandleFunc("/mutex", func(w http.ResponseWriter, r *http.Request) {
+		counterMutex.Lock()
+		defer counterMutex.Unlock()
+
+		counter++
+		fmt.Fprintf(w, "Counter: %d\n", counter)
 	})
 	server := &http.Server{
 		Addr: ":9090",
