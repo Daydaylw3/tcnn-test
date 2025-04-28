@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type Task struct {
@@ -26,6 +27,7 @@ func init() {
 	if mg > 0 {
 		maxGoroutine = mg
 	}
+	log.Printf("Max Goroutine: %d", mg)
 }
 
 func main() {
@@ -63,7 +65,22 @@ func main() {
 	server := &http.Server{
 		Addr: ":9090",
 	}
+	go simulateAlloc()
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+type largeObject struct {
+	data [1024 * 1024]byte
+}
+
+func simulateAlloc() {
+	for {
+		largeObject := &largeObject{}
+
+		fmt.Printf("Allocated large object with address: %p\n", largeObject)
+
+		time.Sleep(time.Second * 3)
 	}
 }
