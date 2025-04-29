@@ -17,11 +17,15 @@ go build -o xxxx
 ## 不开启 每3s分配 1M 内存(尽可能触发gc)
 ## 端口 :9090
 ./tcnn-test
+
 ## 进行配置
 ## 最高同时 goroutine = 10
 ## 开启 每3s分配 1M 内存(尽可能触发gc)
 ## 端口 :8080(*不能省略前面的冒号)
 MAX_GOROUTINE=10 ALLOC_OPEN=t ENDPOINT=:8080 ./tcnn-test
+
+## 如果要进行 numa 邦核
+MAX_GOROUTINE=10 ALLOC_OPEN=t ENDPOINT=:8080 numactl -C 24-31 ./tcnn-test
 ```
 
 ## 跑压测
