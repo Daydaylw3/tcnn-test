@@ -98,8 +98,11 @@ func main() {
 			}()
 		}
 		wg.Wait()
-		fmt.Fprintf(w, "cost: %s", time.Since(start).Round(time.Millisecond*1))
+		fmt.Fprintf(w, "cost: %s\n", time.Since(start).Round(time.Millisecond*1))
 	})
+	if allocOpen {
+		go simulateAlloc()
+	}
 	log.Printf("Server start at: %s", endpoint)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
@@ -147,7 +150,8 @@ func simulateAlloc() {
 	for {
 		largeObject := &largeObject{}
 
-		fmt.Printf("Allocated large object with address: %p\n", largeObject)
+		_ = largeObject
+		//fmt.Printf("Allocated large object with address: %p\n", largeObject)
 
 		time.Sleep(time.Second * 3)
 	}
