@@ -86,6 +86,7 @@ func main() {
 		if atoi == 0 {
 			atoi = 10
 		}
+		start := time.Now()
 		var wg sync.WaitGroup
 		for i := 0; i < atoi; i++ {
 			wg.Add(1)
@@ -97,10 +98,8 @@ func main() {
 			}()
 		}
 		wg.Wait()
+		fmt.Fprintf(w, "cost: %s", time.Since(start).Round(time.Millisecond*1))
 	})
-	if allocOpen {
-		go simulateAlloc()
-	}
 	log.Printf("Server start at: %s", endpoint)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
