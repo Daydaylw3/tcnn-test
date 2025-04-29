@@ -21,11 +21,16 @@ func (t Task) SimulateWork(id int) {
 	fmt.Println("work")
 }
 
+var endpoint = ":9090"
+
 var maxGoroutine = 100
 
 var allocOpen bool
 
 func init() {
+	if end := os.Getenv("ENDPOINT"); end != "" {
+		endpoint = end
+	}
 	mg, _ := strconv.Atoi(os.Getenv("MAX_GOROUTINE"))
 	if mg > 0 {
 		maxGoroutine = mg
@@ -70,7 +75,7 @@ func main() {
 		fmt.Fprintf(w, "Counter: %d\n", counter)
 	})
 	server := &http.Server{
-		Addr: ":9090",
+		Addr: endpoint,
 	}
 	http.HandleFunc("/busy/", func(w http.ResponseWriter, r *http.Request) {
 		paths := strings.Split(r.URL.Path, "/")
@@ -96,22 +101,9 @@ func main() {
 	if allocOpen {
 		go simulateAlloc()
 	}
+	log.Printf("Server start at: %s", endpoint)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
-	}
-}
-
-type largeObject struct {
-	data [1024 * 1024]byte
-}
-
-func simulateAlloc() {
-	for {
-		largeObject := &largeObject{}
-
-		fmt.Printf("Allocated large object with address: %p\n", largeObject)
-
-		time.Sleep(time.Second * 3)
 	}
 }
 
@@ -145,5 +137,19 @@ func doThing(n int) reflect.Type {
 func doBusy() {
 	for i := 0; i < 128; i++ {
 		doThing(i)
+	}
+}
+
+type largeObject struct {
+	data [1024 * 1024]byte
+}
+
+func simulateAlloc() {
+	for {
+		largeObject := &largeObject{}
+
+		fmt.Printf("Allocated large object with address: %p\n", largeObject)
+
+		time.Sleep(time.Second * 3)
 	}
 }
