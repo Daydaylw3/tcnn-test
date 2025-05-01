@@ -61,9 +61,9 @@ func busy() http.HandlerFunc {
 			log.Printf("busy job canceled, %10d tasks done, cost: %s", done, cost)
 			return
 		}
-		cost := time.Since(start).Round(time.Millisecond)
-		log.Printf("busy job finish, %10d tasks done, cost: %s", taskC, cost)
-		fmt.Fprintf(w, "busy job finish, %10d tasks done, cost: %s\n", taskC, cost)
+		cost := time.Since(start)
+		log.Printf("busy job finish, %10d tasks done, cost: %s", taskC, cost.Round(time.Second))
+		fmt.Fprintf(w, "busy job finish, %10d tasks done, cost: %s\n", taskC, cost.Round(time.Millisecond))
 	}
 }
 
