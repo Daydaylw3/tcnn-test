@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"tcnn-test/biz"
 )
 
 var curr chan struct{}
@@ -126,4 +128,10 @@ func doBusy(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+func busy2() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		biz.DoC()
+	}
 }
