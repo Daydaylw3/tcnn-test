@@ -10,8 +10,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"tcnn-test/biz"
 )
 
 var curr chan struct{}
@@ -49,13 +47,7 @@ func mutexFunc() http.HandlerFunc {
 
 func busy() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		paths := strings.Split(r.URL.Path, "/")
-		taskC := 10000
-		if len(paths) >= 3 {
-			if i, _ := strconv.Atoi(paths[2]); i > 0 {
-				taskC = i
-			}
-		}
+		taskC := getTaskCount(r, 10000)
 		start := time.Now()
 
 		if done, err := assignTask(r.Context(), taskC); err != nil {
@@ -67,6 +59,16 @@ func busy() http.HandlerFunc {
 		log.Printf("busy job finish, %10d tasks done, cost: %s", taskC, cost.Round(time.Second))
 		fmt.Fprintf(w, "busy job finish, %10d tasks done, cost: %s\n", taskC, cost.Round(time.Millisecond))
 	}
+}
+
+func getTaskCount(r *http.Request, def int) int {
+	paths := strings.Split(r.URL.Path, "/")
+	if len(paths) >= 3 {
+		if i, _ := strconv.Atoi(paths[2]); i > 0 {
+			return i
+		}
+	}
+	return def
 }
 
 func assignTask(ctx context.Context, taskC int) (int, error) {
@@ -132,6 +134,5 @@ func doBusy(ctx context.Context) error {
 
 func busy2() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		biz.DoC()
 	}
 }
