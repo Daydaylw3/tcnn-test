@@ -3,6 +3,8 @@
 ## 编译
 
 ```shell
+## 编译 cgo 文件
+go generate ./...
 ## 生成 tcnn-test
 go build
 ## 指定文件名 xxxx
@@ -15,22 +17,25 @@ go build -o xxxx
 ## 默认
 ## 最高同时 goroutine = 100
 ## 不开启 每3s分配 1M 内存(尽可能触发gc)
+## cgo 函数会 sleep [3~5]s
 ## 端口 :9090
 ./tcnn-test
 
 ## 进行配置
 ## 最高同时 goroutine = 10
 ## 开启 每3s分配 1M 内存(尽可能触发gc)
+## cgo 函数会 sleep [10~15]s
 ## 端口 :8080(*不能省略前面的冒号)
-MAX_GOROUTINE=10 ALLOC_OPEN=t ENDPOINT=:8080 ./tcnn-test
+MAX_GOROUTINE=10 ALLOC_OPEN=t CGO_SLEEP=10 CGO_SLEEP_RANDOM=5 ENDPOINT=:8080 ./tcnn-test
 
-## 如果要进行 numa 邦核
+## 如果要进行 numa 绑核
 MAX_GOROUTINE=10 ALLOC_OPEN=t ENDPOINT=:8080 numactl -C 24-31 ./tcnn-test
 ```
 
 ## 跑压测
 
 + 当前使用 `endpoint/busy/1000` 来进行测试, 其中 `1000` 为任务总数
++ 新增使用 `endpoint/busy2/10` 来进行测试, 其中 `10` 为任务总数
 
 ## 获取 pprof 数据
 

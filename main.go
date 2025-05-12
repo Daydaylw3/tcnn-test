@@ -29,8 +29,7 @@ func init() {
 	if end := os.Getenv("ENDPOINT"); end != "" {
 		endpoint = end
 	}
-	mg, _ := strconv.Atoi(os.Getenv("MAX_GOROUTINE"))
-	if mg > 0 {
+	if mg, _ := strconv.Atoi(os.Getenv("MAX_GOROUTINE")); mg > 0 {
 		maxGoroutine = mg
 	}
 	log.Printf("Max Goroutine: %d", maxGoroutine)
@@ -50,13 +49,15 @@ func main() {
 	http.HandleFunc("/mutex", mutexFunc())
 	http.HandleFunc("/busy/", busy())
 	http.HandleFunc("/busy", busy())
+	http.HandleFunc("/busy2", busy2())
+	http.HandleFunc("/busy2/", busy2())
 	server := &http.Server{
 		Addr: endpoint,
 	}
 	if allocOpen {
 		go simulateAlloc()
 	}
-	log.Printf("Server start at: %s", endpoint)
+	log.Printf("Endpoint: %s", endpoint)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

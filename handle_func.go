@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"tcnn-test/biz"
 )
 
 var curr chan struct{}
@@ -47,16 +49,10 @@ func mutexFunc() http.HandlerFunc {
 
 func busy() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		paths := strings.Split(r.URL.Path, "/")
-		taskC := 10000
-		if len(paths) >= 3 {
-			if i, _ := strconv.Atoi(paths[2]); i > 0 {
-				taskC = i
-			}
-		}
+		taskC := getTaskCount(r, 10000)
 		start := time.Now()
 
-		if done, err := assignTask(r.Context(), taskC); err != nil {
+		if done, err := assignTask(r.Context(), taskC, doBusy); err != nil {
 			cost := time.Since(start).Round(time.Millisecond)
 			log.Printf("busy job canceled, %10d tasks done, cost: %s", done, cost)
 			return
@@ -67,7 +63,17 @@ func busy() http.HandlerFunc {
 	}
 }
 
-func assignTask(ctx context.Context, taskC int) (int, error) {
+func getTaskCount(r *http.Request, def int) int {
+	paths := strings.Split(r.URL.Path, "/")
+	if len(paths) >= 3 {
+		if i, _ := strconv.Atoi(paths[2]); i > 0 {
+			return i
+		}
+	}
+	return def
+}
+
+func assignTask(ctx context.Context, taskC int, do func(context.Context) error) (int, error) {
 	var wg sync.WaitGroup
 	for i := 0; i < taskC; i++ {
 		wg.Add(1)
@@ -78,13 +84,27 @@ func assignTask(ctx context.Context, taskC int) (int, error) {
 		default:
 			go func() {
 				defer wg.Done()
-				doBusy(ctx)
+				do(ctx)
 				<-curr
 			}()
 		}
 	}
 	wg.Wait()
 	return taskC, ctx.Err()
+}
+
+func doBusy(ctx context.Context) error {
+	for i := 0; i < 128; i++ {
+		select {
+		case <-ctx.Done():
+			// 如果上下文被取消，退出并返回错误
+			return ctx.Err()
+		default:
+			// 没有取消信号，进行正常的工作
+			doThing(i)
+		}
+	}
+	return nil
 }
 
 var mutex sync.Mutex
@@ -114,16 +134,18 @@ func doThing(n int) reflect.Type {
 	return funcTypes[n]
 }
 
-func doBusy(ctx context.Context) error {
-	for i := 0; i < 128; i++ {
-		select {
-		case <-ctx.Done():
-			// 如果上下文被取消，退出并返回错误
-			return ctx.Err()
-		default:
-			// 没有取消信号，进行正常的工作
-			doThing(i)
+func busy2() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		taskC := getTaskCount(r, 10)
+		start := time.Now()
+
+		if done, err := assignTask(r.Context(), taskC, biz.Decode); err != nil {
+			cost := time.Since(start).Round(time.Millisecond)
+			log.Printf("busy job canceled, %10d tasks done, cost: %s", done, cost)
+			return
 		}
+		cost := time.Since(start)
+		log.Printf("busy job finish, %10d tasks done, cost: %s", taskC, cost.Round(time.Second))
+		fmt.Fprintf(w, "busy job finish, %10d tasks done, cost: %s\n", taskC, cost.Round(time.Millisecond))
 	}
-	return nil
 }
