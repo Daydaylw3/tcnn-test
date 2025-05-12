@@ -45,11 +45,11 @@ func init() {
 	}); err != nil {
 		log.Printf("[WARN]init wiki file err: %v", err)
 	}
-	if s, _ := strconv.Atoi(os.Getenv("CGO_SLEEP")); s > 0 {
+	if s, _ := strconv.Atoi(os.Getenv("CGO_SLEEP")); s >= 0 {
 		cgoSleep = s
 	}
 	log.Printf("Cgo Sleep: %d", cgoSleep)
-	if s, _ := strconv.Atoi(os.Getenv("CGO_SLEEP_RANDOM")); s > 0 {
+	if s, _ := strconv.Atoi(os.Getenv("CGO_SLEEP_RANDOM")); s >= 0 {
 		cgoSleepRandom = s
 	}
 	log.Printf("Cgo Sleep Random: %d", cgoSleepRandom)
