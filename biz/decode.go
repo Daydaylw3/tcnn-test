@@ -13,16 +13,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
+var preMalloc = false
+
 var introduce []string
 
-var cgoSleep = 3
-
-var cgoSleepRandom = 2
-
 func init() {
+	var filenames []string
 	if err := filepath.Walk("biz/wiki", func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -41,18 +41,23 @@ func init() {
 			return nil
 		}
 		introduce = append(introduce, file)
+		filenames = append(filenames, filepath.Base(path))
 		return nil
 	}); err != nil {
 		log.Printf("[WARN]init wiki file err: %v", err)
 	}
-	if s, _ := strconv.Atoi(os.Getenv("CGO_SLEEP")); s >= 0 {
-		cgoSleep = s
+	multi, err := strconv.Atoi(os.Getenv("WIKI_MULTI"))
+	if err == nil && multi > 0 {
+		for i := 0; i < multi; i++ {
+			introduce = append(introduce, introduce...)
+		}
 	}
-	log.Printf("Cgo Sleep: %d", cgoSleep)
-	if s, _ := strconv.Atoi(os.Getenv("CGO_SLEEP_RANDOM")); s >= 0 {
-		cgoSleepRandom = s
+	log.Printf("Wiki Multi: %d", multi)
+	log.Printf("Total file: %v and task count: %d", filenames, len(introduce))
+	if t := strings.ToLower(os.Getenv("PRE_MALLOC")); t == "true" || t == "t" || t == "1" {
+		preMalloc = true
 	}
-	log.Printf("Cgo Sleep Random: %d", cgoSleepRandom)
+	log.Printf("Pre Malloc: %t", preMalloc)
 }
 
 func readFile(filepath string) (string, error) {
@@ -94,6 +99,57 @@ func Decode(ctx context.Context) error {
 	return nil
 }
 
+var (
+	parseOnce   sync.Once
+	parsedFiles []map[string]string
+)
+
+func Decode2(ctx context.Context) error {
+	var e error
+	parseOnce.Do(func() {
+		if preMalloc {
+			parsedFiles = make([]map[string]string, 0, len(introduce))
+		}
+		for _, intro := range introduce {
+			if err := ctx.Err(); err != nil {
+				e = err
+				return
+			}
+			file, err := parseIntroFile(intro)
+			if err != nil {
+				log.Printf("parse introduce file(%s) err: %v", intro, err)
+				continue
+			}
+			parsedFiles = append(parsedFiles, file)
+		}
+	})
+	if e != nil {
+		return e
+	}
+	var wikis []wikiIntroduce
+	if preMalloc {
+		wikis = make([]wikiIntroduce, 0, len(parsedFiles))
+	}
+	for _, f := range parsedFiles {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		wikis = append(wikis, decodeToWikiIntroduce(f))
+	}
+	var uppers [][]string
+	if preMalloc {
+		uppers = make([][]string, 0, len(wikis))
+	}
+	for _, w := range wikis {
+		upper, err := callFunc(ctx, w)
+		if errors.Is(err, ctx.Err()) {
+			return err
+		}
+		uppers = append(uppers, upper)
+	}
+	return nil
+}
+
 var introRegexp = regexp.MustCompile(`===([^=]+)===`)
 
 func parseIntroFile(input string) (map[string]string, error) {
@@ -120,7 +176,6 @@ func decodeToWikiIntroduce(file map[string]string) wikiIntroduce {
 		introduce: file["Introduce"],
 		life:      file["Life"],
 		method:    "DefaultMethod",
-		sleep:     cgoSleep + random.Intn(cgoSleepRandom+1),
 	}
 	if p, ok := file["Performances"]; ok {
 		def.method = "Performances"
@@ -147,7 +202,7 @@ func callFunc(ctx context.Context, w wikiIntroduce) ([]string, error) {
 		log.Printf("method(%s) for %T not found", w.Method(), w)
 		return []string{intro, life}, nil
 	}
-	c, err := uppercaseByC(ctx, method.Call(getCallIn())[0].String(), w.Sleep())
+	c, err := uppercaseByC(ctx, method.Call(getCallIn())[0].String())
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +235,6 @@ type wikiIntroduce interface {
 	Introduce() string
 	Life() string
 	Method() string
-	Sleep() int
 }
 
 type defaultIntro struct {
