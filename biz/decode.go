@@ -48,9 +48,11 @@ func init() {
 	}
 	multi, err := strconv.Atoi(os.Getenv("WIKI_MULTI"))
 	if err == nil && multi > 0 {
+		tmp := append([]string{}, introduce...)
 		for i := 0; i < multi; i++ {
-			introduce = append(introduce, introduce...)
+			tmp = append(tmp, introduce...)
 		}
+		introduce = tmp
 	}
 	log.Printf("Wiki Multi: %d", multi)
 	log.Printf("Total file: %v and task count: %d", filenames, len(introduce))

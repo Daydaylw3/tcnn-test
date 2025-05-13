@@ -137,6 +137,7 @@ func doThing(n int) reflect.Type {
 func busy2() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		taskC := getTaskCount(r, 10)
+		taskC *= 10000
 		start := time.Now()
 
 		if done, err := assignTask(r.Context(), taskC, biz.Decode); err != nil {
@@ -153,6 +154,7 @@ func busy2() http.HandlerFunc {
 func busy3() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		taskC := getTaskCount(r, 10)
+		taskC *= 10000
 		start := time.Now()
 
 		if done, err := assignTask(r.Context(), taskC, biz.Decode2); err != nil {
