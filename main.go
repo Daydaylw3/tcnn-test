@@ -49,6 +49,8 @@ func main() {
 	http.HandleFunc("/mutex", mutexFunc())
 	http.HandleFunc("/busy/", busy())
 	http.HandleFunc("/busy", busy())
+	http.HandleFunc("/malloc/", malloc())
+	http.HandleFunc("/malloc", malloc())
 	server := &http.Server{
 		Addr: endpoint,
 	}
