@@ -169,14 +169,14 @@ func malloc() http.HandlerFunc {
 		start := time.Now()
 		if done, err := assignTask(r.Context(), taskC, biz.DoMalloc, arg); err != nil {
 			cost := time.Since(start).Round(time.Millisecond)
-			log.Printf("malloc job(%d, %5d, %4d) canceled, %10d tasks done, %10d tasks left, cost: %s",
-				arg.AllocType, arg.Capacity, arg.Bytes, done, taskC-done, cost)
+			log.Printf("malloc job(%d, %4d, %10d) canceled, %10d tasks done, %10d tasks left, cost: %s",
+				arg.AllocType, arg.Bytes, arg.Capacity, done, taskC-done, cost)
 			return
 		}
 		cost := time.Since(start)
-		log.Printf("malloc job(%d, %5d, %4d) finish, %10d tasks done, cost: %s",
-			arg.AllocType, arg.Capacity, arg.Bytes, taskC, cost.Round(time.Millisecond))
-		_, _ = fmt.Fprintf(w, "malloc job(%d, %5d, %4d) finish, %10d tasks done, cost: %s\n",
-			arg.AllocType, arg.Capacity, arg.Bytes, taskC, cost.Round(time.Second))
+		log.Printf("malloc job(%d, %4d, %10d) finish, %10d tasks done, cost: %s",
+			arg.AllocType, arg.Bytes, arg.Capacity, taskC, cost.Round(time.Millisecond))
+		_, _ = fmt.Fprintf(w, "malloc job(%d, %4d, %10d) finish, %10d tasks done, cost: %s\n",
+			arg.AllocType, arg.Bytes, arg.Capacity, taskC, cost.Round(time.Second))
 	}
 }
