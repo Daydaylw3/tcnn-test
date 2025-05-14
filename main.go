@@ -49,10 +49,6 @@ func main() {
 	http.HandleFunc("/mutex", mutexFunc())
 	http.HandleFunc("/busy/", busy())
 	http.HandleFunc("/busy", busy())
-	http.HandleFunc("/busy2", busy2())
-	http.HandleFunc("/busy2/", busy2())
-	http.HandleFunc("/busy3", busy3())
-	http.HandleFunc("/busy3/", busy3())
 	server := &http.Server{
 		Addr: endpoint,
 	}

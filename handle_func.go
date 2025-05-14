@@ -10,8 +10,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"tcnn-test/biz"
 )
 
 var curr chan struct{}
@@ -132,38 +130,4 @@ func doThing(n int) reflect.Type {
 		},
 	})
 	return funcTypes[n]
-}
-
-func busy2() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		taskC := getTaskCount(r, 10)
-		taskC *= 10000
-		start := time.Now()
-
-		if done, err := assignTask(r.Context(), taskC, biz.Decode); err != nil {
-			cost := time.Since(start).Round(time.Millisecond)
-			log.Printf("busy2 job canceled, %10d tasks done, cost: %s", done, cost)
-			return
-		}
-		cost := time.Since(start)
-		log.Printf("busy2 job finish, %10d tasks done, cost: %s", taskC, cost.Round(time.Second))
-		fmt.Fprintf(w, "busy2 job finish, %10d tasks done, cost: %s\n", taskC, cost.Round(time.Millisecond))
-	}
-}
-
-func busy3() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		taskC := getTaskCount(r, 10)
-		taskC *= 10000
-		start := time.Now()
-
-		if done, err := assignTask(r.Context(), taskC, biz.Decode2); err != nil {
-			cost := time.Since(start).Round(time.Millisecond)
-			log.Printf("busy3 job canceled, %10d tasks done, cost: %s", done, cost)
-			return
-		}
-		cost := time.Since(start)
-		log.Printf("busy3 job finish, %10d tasks done, cost: %s", taskC, cost.Round(time.Second))
-		fmt.Fprintf(w, "busy3 job finish, %10d tasks done, cost: %s\n", taskC, cost.Round(time.Millisecond))
-	}
 }
