@@ -75,7 +75,7 @@ func getTaskCount(r *http.Request, def int) int {
 
 func assignTask(ctx context.Context, taskC int, do func(context.Context, interface{}) error, args ...interface{}) (int, error) {
 	var arg interface{}
-	if len(args) > 1 {
+	if len(args) >= 1 {
 		arg = args[0]
 	}
 	var wg sync.WaitGroup
