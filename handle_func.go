@@ -58,8 +58,8 @@ func busy() http.HandlerFunc {
 			return
 		}
 		cost := time.Since(start)
-		log.Printf("busy  job finish, %10d tasks done, cost: %s", taskC, cost.Round(time.Second))
-		fmt.Fprintf(w, "busy  job finish, %10d tasks done, cost: %s\n", taskC, cost.Round(time.Millisecond))
+		log.Printf("busy  job finish, %10d tasks done, cost: %s", taskC, cost.Round(time.Millisecond))
+		fmt.Fprintf(w, "busy  job finish, %10d tasks done, cost: %s\n", taskC, cost.Round(time.Second))
 	}
 }
 
@@ -148,7 +148,7 @@ func malloc() http.HandlerFunc {
 			return
 		}
 		cost := time.Since(start)
-		log.Printf("busy  job finish, %10d tasks done, cost: %s", taskC, cost.Round(time.Second))
-		fmt.Fprintf(w, "busy  job finish, %10d tasks done, cost: %s\n", taskC, cost.Round(time.Millisecond))
+		log.Printf("busy  job finish, %10d tasks done, cost: %s", taskC, cost.Round(time.Millisecond))
+		fmt.Fprintf(w, "busy  job finish, %10d tasks done, cost: %s\n", taskC, cost.Round(time.Second))
 	}
 }

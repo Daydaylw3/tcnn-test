@@ -67,7 +67,7 @@ func getArg(args []string) arg {
 func doPreallocate2(capa int) interface{} {
 	data := make([][]byte, capa)
 	for j := 0; j < capa; j++ {
-		newBytes := make([]byte, 1024)
+		newBytes := make([]byte, 256)
 		data[j] = newBytes
 	}
 	return data
@@ -76,7 +76,7 @@ func doPreallocate2(capa int) interface{} {
 func doPreallocate(capa int) interface{} {
 	data := make([][]byte, 0, capa)
 	for j := 0; j < capa; j++ {
-		newBytes := make([]byte, 1024)
+		newBytes := make([]byte, 256)
 		data = append(data, newBytes)
 	}
 	return data
@@ -85,7 +85,7 @@ func doPreallocate(capa int) interface{} {
 func withoutPreallocate(capa int) interface{} {
 	var data [][]byte
 	for j := 0; j < capa; j++ {
-		newBytes := make([]byte, 1024)
+		newBytes := make([]byte, 256)
 		data = append(data, newBytes)
 	}
 	return data
