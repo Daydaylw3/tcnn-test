@@ -73,7 +73,11 @@ func getTaskCount(r *http.Request, def int) int {
 	return def
 }
 
-func assignTask(ctx context.Context, taskC int, do func(context.Context, ...string) error, args ...string) (int, error) {
+func assignTask(ctx context.Context, taskC int, do func(context.Context, interface{}) error, args ...interface{}) (int, error) {
+	var arg interface{}
+	if len(args) > 1 {
+		arg = args[0]
+	}
 	var wg sync.WaitGroup
 	for i := 0; i < taskC; i++ {
 		wg.Add(1)
@@ -84,7 +88,7 @@ func assignTask(ctx context.Context, taskC int, do func(context.Context, ...stri
 		default:
 			go func() {
 				defer wg.Done()
-				do(ctx, args...)
+				do(ctx, arg)
 				<-curr
 			}()
 		}
@@ -93,7 +97,7 @@ func assignTask(ctx context.Context, taskC int, do func(context.Context, ...stri
 	return taskC, ctx.Err()
 }
 
-func doBusy(ctx context.Context, _ ...string) error {
+func doBusy(ctx context.Context, _ interface{}) error {
 	for i := 0; i < 128; i++ {
 		select {
 		case <-ctx.Done():
@@ -135,20 +139,44 @@ func doThing(n int) reflect.Type {
 }
 
 func malloc() http.HandlerFunc {
+	parse := func(r *http.Request) biz.MallocConf {
+		var (
+			alloc, _ = strconv.Atoi(r.URL.Query().Get("alloc"))
+			capa     = 1000
+			bytes    = 1024
+
+			capaS  = r.URL.Query().Get("cap")
+			bytesS = r.URL.Query().Get("bytes")
+		)
+		c, err := strconv.Atoi(capaS)
+		if err == nil && c > 0 {
+			capa = c
+		}
+		b, err := strconv.Atoi(bytesS)
+		if err == nil && b > 0 {
+			bytes = b
+		}
+
+		return biz.MallocConf{
+			AllocType: alloc,
+			Capacity:  capa,
+			Bytes:     bytes,
+		}
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		taskC := getTaskCount(r, 1000)
-		capa := r.URL.Query().Get("cap")
-		pre := r.URL.Query().Get("pre")
-		multi := r.URL.Query().Get("multi")
-
+		arg := parse(r)
 		start := time.Now()
-		if done, err := assignTask(r.Context(), taskC, biz.DoMalloc, capa, pre, multi); err != nil {
+		if done, err := assignTask(r.Context(), taskC, biz.DoMalloc, arg); err != nil {
 			cost := time.Since(start).Round(time.Millisecond)
-			log.Printf("busy  job canceled, %10d tasks done, cost: %s", done, cost)
+			log.Printf("malloc job(%d, %5d, %4d) canceled, %10d tasks done, %10d tasks left, cost: %s",
+				arg.AllocType, arg.Capacity, arg.Bytes, done, taskC-done, cost)
 			return
 		}
 		cost := time.Since(start)
-		log.Printf("busy  job finish, %10d tasks done, cost: %s", taskC, cost.Round(time.Millisecond))
-		fmt.Fprintf(w, "busy  job finish, %10d tasks done, cost: %s\n", taskC, cost.Round(time.Second))
+		log.Printf("malloc job(%d, %5d, %4d) finish, %10d tasks done, cost: %s",
+			arg.AllocType, arg.Capacity, arg.Bytes, taskC, cost.Round(time.Millisecond))
+		_, _ = fmt.Fprintf(w, "malloc job(%d, %5d, %4d) finish, %10d tasks done, cost: %s\n",
+			arg.AllocType, arg.Capacity, arg.Bytes, taskC, cost.Round(time.Second))
 	}
 }
